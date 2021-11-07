@@ -36,7 +36,7 @@ def clean_df(df,file):
     df_filter['stars']=df['stars'].apply(get_stars)
     df_filter['reviews']=df['reviews'].apply(get_reviews)
     #
-    df_filter['price']=df['price'].fillna('0').apply(lambda x:x.replace('$','').replace(',',''))
+    df_filter['price']=df['price'].fillna('0').astype(str).apply(lambda x:x.replace('$','').replace(',',''))
     df_filter['rank_big']=df['rank_big'].apply(lambda x: x.replace('#',''))
     df_filter['rank_small']=df['rank_small'].apply(lambda x: x.replace('#',''))
 
