@@ -13,14 +13,6 @@ import datetime as dt # 增加时间
 import glob # 批量处理
 from tqdm import tqdm
 
-
-# 数据录入，确定导入哪些
-PATH='E:/Desktop/新建文件夹/整理/' # 数据所在
-SAVE_PATH='E:/Desktop/新建文件夹/保存/'
-# 如果保存的是csv，下面改成csv
-file_list=glob.glob(PATH+'*.csv')
-
-
 def get_reviews(n):
     try:
         n1=n.replace(',','')
@@ -39,7 +31,7 @@ def get_stars(n):
 # 抓取数据初步处理
 def clean_df(df,file):
     # 把nan数据转换成‘’
-    df_filter=df.fillna('')
+    df_filter=df.copy()
     # 数据处理
     df_filter['stars']=df['stars'].apply(get_stars)
     df_filter['reviews']=df['reviews'].apply(get_reviews)
@@ -66,21 +58,23 @@ def put_database(df):
     cur.close()
     conn.close()
 
-
-
 def main():
-    
     if file_list:
         for file in file_list:
-            #try:
-            df=pd.read_csv(file,encoding='gbk')
-            #return df
-            df_final=clean_df(df,file)
-            
-            df_final.to_csv(SAVE_PATH+file.split('\\')[1])
-            print('======存入数据库=====')
-            put_database(df_final)
-            return df_final
+            file_class=file.split('\\')[1]
+            # 如果保存文件夹里没有，再push
+            if len(file_save_list)==0 or (file_class not in [f.split('\\')[1] for f in file_save_list]):
+                #try:
+                df=pd.read_csv(file,encoding='gbk')
+                #return df
+                df_final=clean_df(df,file)
+                
+                df_final.to_csv(SAVE_PATH+file.split('\\')[1])
+                print('======存入数据库=====')
+                put_database(df_final)
+                return df_final
+            else:
+                print("======已经有{}这份文件在保存目录里".format(file))
             #except:
              #   continue
     else:
@@ -88,4 +82,10 @@ def main():
         
         
 if __name__ == '__main__':
+    # 数据录入，确定导入哪些
+    PATH='E:/Desktop/update/整理/' # 数据所在
+    SAVE_PATH='E:/Desktop/update/保存/'
+    # 如果保存的是csv，下面改成csv
+    file_list=glob.glob(PATH+'*.csv')
+    file_save_list=glob.glob(SAVE_PATH+'*.csv')
     aaa=main()

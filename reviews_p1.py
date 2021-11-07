@@ -9,9 +9,12 @@ Created on Tue Nov  2 18:53:04 2021
 import pymysql
 import pandas as pd
 from tqdm import tqdm
+import glob # 批量处理
 
-cls='E:learningamazonlistmonitors' # 所属产品
+cls_='E:learningamazonlistmonitors' # 所属产品
+type_='bsr'
 n=3 # 多少天
+PATH_REVIEWS_URL='E:/amz_url/more_url.txt' 
 
 # 从数据库中获取各自的类目
 def get_data_from_mysql(sql):
@@ -28,14 +31,20 @@ sql="""
 select t2.asin,t2.reviews
 from
 (select max(date) date,asin,round(avg(rank_big),0) rank_big_mean, round(avg(rank_small),0) rank_small_mean,count(asin) as n from listdb 
-where class="{}" 
+where class="{}" and type="{}"
 group by asin) t1
 left JOIN listdb t2
 on t1.date=t2.date and t1.asin=t2.asin
 where t1.n>={} and t2.reviews>0
-""".format(cls,n)
+""".format(cls_,type_,n)
 
-#
+# 从本地获取需要的信息
+#PATH='E:/Desktop/update/保存/'
+#file_list=glob.glob(PATH+'*.csv')
+#for file in file_list:
+    
+
+# 从数据库中获取需要的信息
 df_reviews=pd.DataFrame(get_data_from_mysql(sql),columns=['asin','reviews'])
 df_reviews['reviews']=df_reviews['reviews'].apply(lambda x:int(x.replace('.0','')))
 
@@ -62,7 +71,7 @@ for asin in url_more:
         for i,j in info:
                 reviews_p1_url.append(base_url+asin+j)
 
-PATH_REVIEWS_URL='E:\\amz_url\\more_url.txt'
+
 with open(PATH_REVIEWS_URL,'w') as f:
     for i in tqdm(reviews_p1_url):
         f.writelines(i+'\n')
