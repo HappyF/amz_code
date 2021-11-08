@@ -33,13 +33,21 @@ def get_stars(n):
 def clean_df(df,file):
     # 把nan数据转换成‘’
     df_filter=df.copy()
+    
+    # 空缺处理
+    df_filter['brand']=df_filter['brand'].fillna('-1').astype(str)
+    df_filter['title']=df_filter['title'].fillna('-1').astype(str) 
+    df_filter['sell']=df_filter['sell'].fillna('-1').astype(str)
+    df_filter['on_shelf']=df_filter['on_shelf'].fillna('-1').astype(str)
+    df_filter['buy_limit']=df_filter['buy_limit'].fillna('-1').astype(str)
+
     # 数据处理
     df_filter['stars']=df['stars'].apply(get_stars)
     df_filter['reviews']=df['reviews'].apply(get_reviews)
     #
-    df_filter['price']=df['price'].fillna('0').astype(str).apply(lambda x:x.replace('$','').replace(',',''))
-    df_filter['rank_big']=df['rank_big'].apply(lambda x: x.replace('#',''))
-    df_filter['rank_small']=df['rank_small'].apply(lambda x: x.replace('#',''))
+    df_filter['price']=df['price'].fillna('-1').astype(str).apply(lambda x:x.replace('$','').replace(',',''))
+    df_filter['rank_big']=df['rank_big'].fillna('-1').astype(str).apply(lambda x: x.replace('#',''))
+    df_filter['rank_small']=df['rank_small'].fillna('-1').astype(str).apply(lambda x: x.replace('#',''))
 
     # 抓取日期，类目
     df_filter['insert_date']=dt.datetime.now().strftime("%Y-%m-%d")
@@ -53,7 +61,9 @@ def put_database(df):
     conn=pymysql.connect(host='rm-m5ex5024i8851023yqo.mysql.rds.aliyuncs.com',user='amz1',password='amz123456+',database='amz_data')
     cur=conn.cursor()
     for i in tqdm(range(len(df))):
-        sql="insert into listdb(rank_small,title,url,reviews_url,stars,reviews,sell,rank_big,rank_big_name,asin,brand,on_shelf,buy_limit,price,insert_date,type,date,class) values('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(df.loc[i,'rank_small'],df.loc[i,'title'].replace("'","\'"),df.loc[i,'url'],df.loc[i,'reviews_url'],df.loc[i,'stars'],str(df.loc[i,'reviews']), df.loc[i,'sell'],df.loc[i,'rank_big'],df.loc[i,'rank_big_name'],df.loc[i,'asin'],df.loc[i,'brand'].replace(".","\'"),df.loc[i,'on_shelf'].replace('?',''),df.loc[i,'buy_limit'],df.loc[i,'price'],df.loc[i,'insert_date'],df.loc[i,'type'],df.loc[i,'date'],df.loc[i,'class'])
+        
+        sql="insert into listdb(rank_small,title,url,reviews_url,stars,reviews,sell,rank_big,rank_big_name,asin,brand,on_shelf,buy_limit,price,insert_date,type,date,class) values('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(df.loc[i,'rank_small'],df.loc[i,'title'].replace("'","\\'"),df.loc[i,'url'],df.loc[i,'reviews_url'],df.loc[i,'stars'],str(df.loc[i,'reviews']), df.loc[i,'sell'],df.loc[i,'rank_big'],df.loc[i,'rank_big_name'],df.loc[i,'asin'],df.loc[i,'brand'].replace("'","\\'"),df.loc[i,'on_shelf'].replace('?',''),df.loc[i,'buy_limit'],df.loc[i,'price'],df.loc[i,'insert_date'],df.loc[i,'type'],df.loc[i,'date'],df.loc[i,'class'])
+        # print(i,sql)
         cur.execute(sql)
     conn.commit()
     cur.close()
@@ -61,12 +71,12 @@ def put_database(df):
 
 def main():
     if file_list:
-        for file in file_list:
-            if platform.system()=='Windows':
+        if platform.system()=='Windows':
+            for file in file_list:
                 file_class=file.split('\\')[-1]
                 # 如果保存文件夹里没有，再push
                 # 苹果电脑 split('/')
-                if len(file_save_list)==0 or (file_class not in [f.split('\\')[-1] for f in file_save_list]):
+                if (file_class not in [f.split('/')[-1] for f in file_save_list]) or len(file_save_list)==0:
                     try:
                         df=pd.read_csv(file)
                     except:
@@ -77,14 +87,16 @@ def main():
                     df_final.to_csv(SAVE_PATH+file.split('\\')[-1])
                     print('======存入数据库=====')
                     put_database(df_final)
-                    return df_final
+                    #return df_final
                 else:
                     print("======已经有{}这份文件在保存目录里".format(file))
-            else:
+                continue
+        else:
+            for file in file_list:
                 file_class=file.split('/')[-1]
                 # 如果保存文件夹里没有，再push
                 # 苹果电脑 split('/')
-                if len(file_save_list)==0 or (file_class not in [f.split('/')[-1] for f in file_save_list]):
+                if  (file_class not in [f.split('/')[-1] for f in file_save_list]) or len(file_save_list)==0:
                     try:
                         df=pd.read_csv(file)
                     except:
@@ -95,18 +107,23 @@ def main():
                     df_final.to_csv(SAVE_PATH+file.split('/')[-1])
                     print('======存入数据库=====')
                     put_database(df_final)
-                    return df_final
+                    #return df_final
                 else:
                     print("======已经有{}这份文件在保存目录里".format(file))
+                continue
+            
     else:
         print("文件路径有问题，截屏相关文件夹，群里提问")
         
         
 if __name__ == '__main__':
     # 数据录入，确定导入哪些
-    PATH='E:/Desktop/update/整理/' # 数据所在
-    SAVE_PATH='E:/Desktop/update/保存/'
+    #PATH='E:/Desktop/update/整理/' # 数据所在
+    #SAVE_PATH='E:/Desktop/update/保存/'
+    PATH='/Users/happyf/Desktop/amazon/amz_code/整理/'
+    SAVE_PATH='/Users/happyf/Desktop/amazon/amz_code/保存/'
+    
     # 如果保存的是csv，下面改成csv
     file_list=glob.glob(PATH+'*.csv')
     file_save_list=glob.glob(SAVE_PATH+'*.csv')
-    aaa=main()
+    main()
