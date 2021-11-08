@@ -12,6 +12,7 @@ import re # 处理文本
 import datetime as dt # 增加时间
 import glob # 批量处理
 from tqdm import tqdm
+import platform
 
 def get_reviews(n):
     try:
@@ -61,24 +62,44 @@ def put_database(df):
 def main():
     if file_list:
         for file in file_list:
-            file_class=file.split('\\')[1]
-            # 如果保存文件夹里没有，再push
-            if len(file_save_list)==0 or (file_class not in [f.split('\\')[1] for f in file_save_list]):
-                #try:
-                df=pd.read_csv(file,encoding='gbk')
-                #return df
-                df_final=clean_df(df,file)
-                
-                df_final.to_csv(SAVE_PATH+file.split('\\')[1])
-                print('======存入数据库=====')
-                put_database(df_final)
-                return df_final
+            if platform.system()=='Windows':
+                file_class=file.split('\\')[-1]
+                # 如果保存文件夹里没有，再push
+                # 苹果电脑 split('/')
+                if len(file_save_list)==0 or (file_class not in [f.split('\\')[-1] for f in file_save_list]):
+                    try:
+                        df=pd.read_csv(file)
+                    except:
+                        df=pd.read_csv(file,encoding='gbk')
+                    #return df
+                    df_final=clean_df(df,file)
+                    
+                    df_final.to_csv(SAVE_PATH+file.split('\\')[-1])
+                    print('======存入数据库=====')
+                    put_database(df_final)
+                    return df_final
+                else:
+                    print("======已经有{}这份文件在保存目录里".format(file))
             else:
-                print("======已经有{}这份文件在保存目录里".format(file))
-            #except:
-             #   continue
+                file_class=file.split('/')[-1]
+                # 如果保存文件夹里没有，再push
+                # 苹果电脑 split('/')
+                if len(file_save_list)==0 or (file_class not in [f.split('/')[-1] for f in file_save_list]):
+                    try:
+                        df=pd.read_csv(file)
+                    except:
+                        df=pd.read_csv(file,encoding='gbk')
+                    #return df
+                    df_final=clean_df(df,file)
+                    
+                    df_final.to_csv(SAVE_PATH+file.split('/')[-1])
+                    print('======存入数据库=====')
+                    put_database(df_final)
+                    return df_final
+                else:
+                    print("======已经有{}这份文件在保存目录里".format(file))
     else:
-        print("文件路径有问题，群里提问")
+        print("文件路径有问题，截屏相关文件夹，群里提问")
         
         
 if __name__ == '__main__':
