@@ -12,9 +12,9 @@ from tqdm import tqdm
 import glob # 批量处理
 
 cls_='E:learningamazonlistmonitors' # 所属产品
-type_='bsr'
-n=3 # 多少天
-PATH_REVIEWS_URL='E:/amz_url/more_url.txt' 
+# type_='bsr'
+# n=3 # 多少天
+PATH_REVIEWS_URL='/Users/happyf/Desktop/amazon/amz_code/more_url.txt' 
 
 # 从数据库中获取各自的类目
 def get_data_from_mysql(sql):
@@ -27,17 +27,16 @@ def get_data_from_mysql(sql):
 
 # 先选择产品，再排重，下面SQL的逻辑，是选取每个asin中最近一次抓取时的asin
 sql="""
--- select t1.date, t2.asin,t1.rank_big_mean,t1.rank_small_mean,t2.reviews
-select t2.asin,t2.reviews
+select distinct t2.asin,t2.reviews 
 from
-(select max(date) date,asin,round(avg(rank_big),0) rank_big_mean, round(avg(rank_small),0) rank_small_mean,count(asin) as n from listdb 
-where class="{}" and type="{}"
+(select max(date) date,asin from listdb 
+where class="{}" 
 group by asin) t1
 left JOIN listdb t2
 on t1.date=t2.date and t1.asin=t2.asin
-where t1.n>={} and t2.reviews>0
-""".format(cls_,type_,n)
-
+where t2.reviews>0
+""".format(cls_)
+#print(sql)
 # 从本地获取需要的信息
 #PATH='E:/Desktop/update/保存/'
 #file_list=glob.glob(PATH+'*.csv')
@@ -71,6 +70,7 @@ for asin in url_more:
         for i,j in info:
                 reviews_p1_url.append(base_url+asin+j)
 
+print('共获得url:{}条'.format(len(reviews_p1_url)))
 
 with open(PATH_REVIEWS_URL,'w') as f:
     for i in tqdm(reviews_p1_url):
