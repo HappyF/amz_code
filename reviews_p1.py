@@ -44,8 +44,8 @@ where t2.reviews>0
     
 
 # 从数据库中获取需要的信息
-df_reviews=pd.DataFrame(get_data_from_mysql(sql),columns=['asin','reviews'])
-df_reviews['reviews']=df_reviews['reviews'].apply(lambda x:int(x.replace('.0','')))
+df_reviews=pd.DataFrame(list(get_data_from_mysql(sql)),columns=['asin','reviews'])
+df_reviews['reviews']=df_reviews['reviews'].apply(lambda x:int(x.replace('.0','').replace(',','')))
 
 base_url='https://www.amazon.com/product-reviews/'
 reviews_p1_url=[]
